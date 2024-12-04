@@ -1,6 +1,6 @@
 # PE-chaDbot
 
-#### Frontend:
+#### Frontend
 ### Prerequisites
 - Python v3.12
 - Ensure Docker and docker-compose are installed.
@@ -23,7 +23,7 @@ To stop the server and client, press `ctrl` + `c` in the same terminal.
 ## Notepad for Tinkering
 Open https://colab.research.google.com/github/jemaie/PE-chaDbot/blob/main/PE_Assistant_ChaDbot_Interactive.ipynb to experience the chaDbot notebook on your own.
 
-#### Backend:
+#### Backend
 ### General Info
 In total 5 agents have been defined and 2 orchistrator.
 
@@ -36,7 +36,7 @@ In total 5 agents have been defined and 2 orchistrator.
 - Ensure FastAPI is installed (pip install fastapi)
 - Ensure OpenAI's Python library Swarm is installed (pip install git+ssh://git@github.com/openai/swarm.git) 
 
-### Start the backend
+### Start the backend
 1. In the file backend_chaDbot.py set the OPENAI_API_KEY (approx. line 94)
 2. Open the terminal and change to the folder where the file is located: backend_chaDbot.py 
 3. Hit the command: fastapi dev backend_chaDbot.py
