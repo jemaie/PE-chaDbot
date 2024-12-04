@@ -1,20 +1,33 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useChatStore } from '../../stores/chat';
+import { chatService } from '../../services/chatService.ts';
 
 const chatStore = useChatStore();
 const messageInput = ref('');
 
-const sendMessage = () => {
+const sendMessage = async () => {
   if (!messageInput.value.trim()) return;
 
+  const input = messageInput.value;
+  messageInput.value = '';
+
   chatStore.addMessage({
-    content: messageInput.value,
+    content: input,
     sender: 'user',
     timestamp: new Date()
   });
 
-  messageInput.value = '';
+  await chatService.sendMessage( [], input, chatStore.isShortAnswer).then((res) => {
+    chatStore.addMessage({
+          content: res.data.message,
+          sender: 'assistant',
+          timestamp: new Date()
+        },
+        res.data.actions
+    );
+  });
+
 };
 </script>
 

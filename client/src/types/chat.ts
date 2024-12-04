@@ -9,6 +9,7 @@ export interface ChatSession {
   id: string;
   title: string;
   messages: Message[];
+  actionablePoints: string;
   createdAt: Date;
   lastUpdated: Date;
 }
