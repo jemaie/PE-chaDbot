@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
 export const useLayoutStore = defineStore('layout', () => {
-  const rightSidebarWidth = ref(256); // Default width in pixels
+  const rightSidebarWidth = ref(300); // Default width in pixels
   const isDragging = ref(false);
 
   const updateSidebarWidth = (width: number) => {

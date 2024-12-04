@@ -16,6 +16,7 @@ export const useChatStore = defineStore('chat', () => {
       id: crypto.randomUUID(),
       title: 'New Chat',
       messages: [],
+      actionablePoints: '',
       createdAt: new Date(),
       lastUpdated: new Date()
     };
@@ -23,8 +24,10 @@ export const useChatStore = defineStore('chat', () => {
     activeChatId.value = newChat.id;
   }
 
-  function addMessage(message: Omit<Message, 'id'>) {
-    if (!activeChatId.value) return;
+  function addMessage(message: Omit<Message, 'id'>, points?: string) {
+    if (!activeChatId.value) {
+      createNewChat();
+    }
     
     const chat = sessions.value.find(s => s.id === activeChatId.value);
     if (chat) {
@@ -32,6 +35,9 @@ export const useChatStore = defineStore('chat', () => {
         ...message,
         id: crypto.randomUUID()
       });
+      if (points) {
+        chat.actionablePoints = points;
+      }
       chat.lastUpdated = new Date();
     }
   }
