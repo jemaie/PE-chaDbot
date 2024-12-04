@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --transition-duration: 300ms;
+  --transition-duration: 50ms;
 }
 
 * {
