@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --transition-duration: 300ms;
+}
+
+* {
+  transition: background-color var(--transition-duration),
+              border-color var(--transition-duration),
+              color var(--transition-duration);
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+/* Disable transitions during sidebar resize */
+body[style*="cursor: col-resize"] * {
+  transition: none !important;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
