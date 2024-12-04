@@ -1,0 +1,17 @@
+services:
+  server:
+    build: server
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./server/app:/app/code
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+  client:
+    build: client
+    ports:
+      - "8080:5173"
+    volumes:
+      - ./client/src:/app/src
+    environment:
+      - CHOKIDAR_USEPOLLING=true
