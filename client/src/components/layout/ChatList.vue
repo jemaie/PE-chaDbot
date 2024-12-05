@@ -56,7 +56,7 @@ const stopEditing = (sessionId: string, newTitle: string) => {
 
       <button
           v-if="session.id === chatStore.activeChatId"
-          @click="chatStore.deleteChat(session.id)"
+          @click.stop="chatStore.deleteChat(session.id)"
           class="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-300 dark:hover:bg-gray-600 transition-opacity duration-200"
       >
         <svg
