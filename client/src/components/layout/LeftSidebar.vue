@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ChatList from './ChatList.vue';
 import { ref } from 'vue';
 import { useChatStore } from '../../stores/chat';
 import { useThemeStore } from '../../stores/theme';
@@ -88,21 +89,7 @@ const toggleSidebar = () => {
     </div>
 
     <div v-if="isExpanded" class="mt-4">
-      <div
-        v-for="session in chatStore.sessions"
-        :key="session.id"
-        @click="chatStore.activeChatId = session.id"
-        class="px-4 py-2 cursor-pointer transition-colors"
-        :class="{
-          'bg-gray-200 dark:bg-gray-700': session.id === chatStore.activeChatId,
-          'hover:bg-gray-100 dark:hover:bg-gray-700': session.id !== chatStore.activeChatId
-        }"
-      >
-        <h3 class="font-medium truncate">{{ session.title }}</h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-          {{ new Date(session.lastUpdated).toLocaleString() }}
-        </p>
-      </div>
+      <ChatList />
     </div>
   </aside>
 </template>

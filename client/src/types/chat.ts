@@ -12,6 +12,7 @@ export interface ChatSession {
   actionablePoints: string;
   createdAt: Date;
   lastUpdated: Date;
+  isEditing: boolean;
 }
 
 export interface ThemeState {

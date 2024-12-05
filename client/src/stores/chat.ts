@@ -18,10 +18,19 @@ export const useChatStore = defineStore('chat', () => {
       messages: [],
       actionablePoints: '',
       createdAt: new Date(),
-      lastUpdated: new Date()
+      lastUpdated: new Date(),
+      isEditing: false
     };
     sessions.value.push(newChat);
     activeChatId.value = newChat.id;
+  }
+
+  function deleteChat(chatId: string) {
+    sessions.value = sessions.value.filter((session) => session.id !== chatId);
+
+    if (activeChatId.value === chatId) {
+      activeChatId.value = sessions.value.length ? sessions.value[0].id : null;
+    }
   }
 
   function addMessage(message: Omit<Message, 'id'>, points?: string) {
@@ -48,6 +57,7 @@ export const useChatStore = defineStore('chat', () => {
     isShortAnswer,
     activeChat,
     createNewChat,
+    deleteChat,
     addMessage
   };
 }, {
