@@ -14,13 +14,3 @@ export interface ChatSession {
   lastUpdated: Date;
   isEditing: boolean;
 }
-
-export interface ThemeState {
-  isDark: boolean;
-}
-
-export interface ChatState {
-  sessions: ChatSession[];
-  activeChatId: string | null;
-  isShortAnswer: boolean;
-}
