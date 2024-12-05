@@ -2,13 +2,10 @@ import os
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
+from swarm import Swarm, Agent
 
 from models.message import Message
 from models.response import Response
-
-from swarm import Swarm, Agent
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 app.add_middleware(
@@ -18,62 +15,36 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*']
 )
-
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
+client = Swarm()
 
 
 @app.post("/message")
-async def post_message(message: Message, toggle_option: str = "detailed"):
-    # Prepare message before sending it to the openai API
-    global list_message_history
-    list_message = list_message_history + [{"role": "user", "content": message.content}]
-
-    # Run the agent system (Generate general response)
+async def post_message(message: Message):
     response = client.run(
-        agent=agent_orchistrator_detailed if toggle_option=="detailed" else agent_orchistrator_simplified,
+        agent=agent_orchistrator_detailed if message.detailed else agent_orchistrator_simplified,
         context_variables={"temperature": 0.25, "top_p": 1, "frequency_penalty": 0.5, "presence_penalty": 0},
-        messages=list_message
-    )  
+        messages=message.history
+    )
+
     str_response = response.messages[-1]["content"]
     str_responsible_agent = response.messages[-1]["sender"]
     print(f"Responsible agent {str_responsible_agent} responded: {str_response}")
 
-    # Keep track of all messages
-    list_message_history = list_message + [{"role": "assistant", "content": str_response}]
-
-    # Now that we have generated the response, we will also extract action points for the sidebar. 
-    # Run the agent system (Extract action response)
     response_actions = client.run(
         agent=agent_action_generator,
         context_variables={"temperature": 0.25, "top_p": 1, "frequency_penalty": 0.5, "presence_penalty": 0},
-        messages=list_message
+        messages=message.history
     )  
 
     str_response_actions = response_actions.messages[-1]["content"]
 
-    # Keep track of all messages
-    list_message_history = list_message + [{"role": "assistant", "content": str_response_actions}]
-
-    # Prepare response message
-    obj_response = Response(
+    print(f"The agent system has responded.")
+    return Response(
         message=str_response,
-        actions=str_response_actions
+        actions=str_response_actions,
+        agent="PLACEHOLDER"
     )
 
-    print(f"The agent system has responded.")
-    # return Response(message="test", actions="test")
-    return obj_response
-
-######## Main ########
-
-# Memory, remember all messages
-list_message_history = list()
-
-# Prepare the Agent system
-client = Swarm()
 
 def transfer_to_agent_prof_detailed():
     return agent_prof_expert_detailed
