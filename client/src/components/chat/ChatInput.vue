@@ -27,6 +27,7 @@ const sendMessage = async () => {
     chatStore.addMessage({
           content: res.data.message,
           role: 'assistant',
+          agent: res.data.agent,
           timestamp: new Date()
         },
         res.data.actions

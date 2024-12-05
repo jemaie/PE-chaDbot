@@ -20,7 +20,10 @@ defineProps<{
       ]"
     >
       <div v-html="message.content"></div>
-      <span class="text-xs opacity-70 mt-1 block">
+      <span v-if="message.agent" class="text-xs opacity-70 mt-1 block">
+        {{ new Date(message.timestamp).toLocaleTimeString() }} - {{ message.agent }}
+      </span>
+      <span v-else class="text-xs opacity-70 mt-1 block">
         {{ new Date(message.timestamp).toLocaleTimeString() }}
       </span>
     </div>
