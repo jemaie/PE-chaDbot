@@ -16,7 +16,11 @@ const chatStore = useChatStore();
     <div class="flex-1 overflow-y-auto p-6">
       <h2 class="text-xl font-bold mb-4 text-black dark:text-white">Actionable Points</h2>
       <div v-if="chatStore.activeChat && chatStore.activeChat.actionablePoints" class="prose dark:prose-invert">
-        <p>{{ chatStore.activeChat.actionablePoints }}</p>
+        <ol class="list-decimal pl-5">
+          <li v-for="(point, index) in chatStore.activeChat.actionablePoints" :key="index" class="mb-1">
+            {{ point }}
+          </li>
+        </ol>
       </div>
       <div v-else class="prose dark:prose-invert">
         <p>No actionable points available for this conversation yet.</p>

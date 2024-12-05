@@ -19,7 +19,7 @@ defineProps<{
           : 'bg-gray-100 dark:bg-gray-700',
       ]"
     >
-      <p>{{ message.content }}</p>
+      <div v-html="message.content"></div>
       <span class="text-xs opacity-70 mt-1 block">
         {{ new Date(message.timestamp).toLocaleTimeString() }}
       </span>
