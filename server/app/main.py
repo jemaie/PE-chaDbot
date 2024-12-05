@@ -1,4 +1,4 @@
-import os
+import re
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
@@ -37,12 +37,13 @@ async def post_message(message: Message):
     )  
 
     str_response_actions = response_actions.messages[-1]["content"]
+    actionable_points = re.split(r'\n?\d+\.\s', str_response_actions)
 
     print(f"The agent system has responded.")
     return Response(
         message=str_response,
-        actions=str_response_actions,
-        agent="PLACEHOLDER"
+        actions=[point.strip() for point in actionable_points if point.strip()],
+        agent=str_responsible_agent
     )
 
 
