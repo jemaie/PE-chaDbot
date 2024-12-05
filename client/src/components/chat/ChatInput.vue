@@ -9,25 +9,21 @@ const messageInput = ref('');
 const sendMessage = async () => {
   if (!messageInput.value.trim()) return;
 
-  const input = messageInput.value;
-  messageInput.value = '';
-
-  const activeChat = chatStore.activeChat;
-  const messageHistory = [
-    ...(activeChat?.messages.map((msg) => ({
-      role: msg.role,
-      content: msg.content
-    })) || [])
-  ];
-
   chatStore.addMessage({
-    content: input,
+    content: messageInput.value,
     role: 'user',
     timestamp: new Date()
   });
 
+  messageInput.value = '';
 
-  await chatService.sendMessage(messageHistory, input, chatStore.isShortAnswer).then((res) => {
+  const activeChat = chatStore.activeChat;
+  const messageHistory = activeChat.messages.map((msg) => ({
+      role: msg.role,
+      content: msg.content
+    }));
+
+  await chatService.sendMessage(messageHistory, chatStore.detailedAnswer).then((res) => {
     chatStore.addMessage({
           content: res.data.message,
           role: 'assistant',
@@ -44,13 +40,13 @@ const sendMessage = async () => {
   <div class="border-t dark:border-gray-700 p-4">
     <div class="flex items-center gap-4">
       <button
-        @click="chatStore.isShortAnswer = !chatStore.isShortAnswer"
+        @click="chatStore.detailedAnswer = !chatStore.detailedAnswer"
         class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-        :title="chatStore.isShortAnswer ? 'Short Answer Mode' : 'Long Answer Mode'"
+        :title="chatStore.detailedAnswer ? 'Change to Short Answer' : 'Change to Detailed Answer'"
       >
         <svg
           class="w-6 h-6"
-          :class="{ 'text-blue-500': !chatStore.isShortAnswer }"
+          :class="{ 'text-blue-500': chatStore.detailedAnswer }"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
