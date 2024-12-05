@@ -6,6 +6,34 @@ import { chatService } from '../../services/chatService.ts';
 const chatStore = useChatStore();
 const messageInput = ref('');
 
+const adjustTextareaHeight = (event: Event) => {
+  const textarea = event.target as HTMLTextAreaElement;
+  textarea.style.height = 'auto';
+  textarea.style.height = `${textarea.scrollHeight}px`;
+
+  if (textarea.scrollHeight <= parseFloat(getComputedStyle(textarea).maxHeight)) {
+    textarea.style.overflowY = 'hidden';
+  } else {
+    textarea.style.overflowY = 'auto';
+  }
+};
+
+const resetTextareaHeight = () => {
+  const textarea = document.querySelector('textarea');
+  if (textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.overflowY = 'hidden';
+  }
+};
+
+const handleKeyUp = (event: KeyboardEvent) => {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage();
+    resetTextareaHeight();
+  }
+};
+
 const sendMessage = async () => {
   if (!messageInput.value.trim()) return;
 
@@ -62,16 +90,17 @@ const sendMessage = async () => {
       </button>
 
       <div class="flex-1 relative">
-        <input
-          v-model="messageInput"
-          @keyup.enter="sendMessage"
-          type="text"
-          placeholder="Type your message..."
-          class="w-full px-4 py-2 rounded-full border dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        <textarea
+            v-model="messageInput"
+            @input="adjustTextareaHeight"
+            @keyup.enter="handleKeyUp"
+            placeholder="Type your message..."
+            rows="1"
+            class="w-full px-2 pr-8 py-1 rounded-md border dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none overflow-y-auto max-h-48"
+        ></textarea>
         <button
-          @click="sendMessage"
-          class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+          @click="() => { sendMessage(); resetTextareaHeight(); }"
+          class="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           <svg
             class="w-5 h-5 text-blue-500"
