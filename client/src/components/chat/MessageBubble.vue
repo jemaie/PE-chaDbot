@@ -9,12 +9,12 @@ defineProps<{
 <template>
   <div
     class="flex mb-4"
-    :class="message.sender === 'user' ? 'justify-end' : 'justify-start'"
+    :class="message.role === 'user' ? 'justify-end' : 'justify-start'"
   >
     <div
       class="max-w-[70%] rounded-lg px-4 py-2"
       :class="[
-        message.sender === 'user'
+        message.role === 'user'
           ? 'bg-blue-500 text-white'
           : 'bg-gray-100 dark:bg-gray-700',
       ]"

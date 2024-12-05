@@ -12,16 +12,25 @@ const sendMessage = async () => {
   const input = messageInput.value;
   messageInput.value = '';
 
+  const activeChat = chatStore.activeChat;
+  const messageHistory = [
+    ...(activeChat?.messages.map((msg) => ({
+      role: msg.role,
+      content: msg.content
+    })) || [])
+  ];
+
   chatStore.addMessage({
     content: input,
-    sender: 'user',
+    role: 'user',
     timestamp: new Date()
   });
 
-  await chatService.sendMessage( [], input, chatStore.isShortAnswer).then((res) => {
+
+  await chatService.sendMessage(messageHistory, input, chatStore.isShortAnswer).then((res) => {
     chatStore.addMessage({
           content: res.data.message,
-          sender: 'assistant',
+          role: 'assistant',
           timestamp: new Date()
         },
         res.data.actions
