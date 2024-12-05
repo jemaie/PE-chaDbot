@@ -5,7 +5,7 @@ import type { ChatSession, Message } from '@/types/chat';
 export const useChatStore = defineStore('chat', () => {
   const sessions = ref<ChatSession[]>([]);
   const activeChatId = ref<string | null>(null);
-  const isShortAnswer = ref<boolean>(true);
+  const detailedAnswer = ref<boolean>(true);
 
   const activeChat = computed(() => 
     sessions.value.find(session => session.id === activeChatId.value)
@@ -54,7 +54,7 @@ export const useChatStore = defineStore('chat', () => {
   return {
     sessions,
     activeChatId,
-    isShortAnswer,
+    detailedAnswer,
     activeChat,
     createNewChat,
     deleteChat,
