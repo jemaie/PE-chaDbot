@@ -20,6 +20,7 @@ client = Swarm()
 
 @app.post("/message")
 async def post_message(message: Message):
+    print(f"Forwarding the request to OpenAI.")
     response = client.run(
         agent=agent_orchistrator_detailed if message.detailed else agent_orchistrator_simplified,
         context_variables={"temperature": 0.25, "top_p": 1, "frequency_penalty": 0.5, "presence_penalty": 0},
@@ -30,18 +31,32 @@ async def post_message(message: Message):
     str_responsible_agent = response.messages[-1]["sender"]
     print(f"Responsible agent {str_responsible_agent} responded: {str_response}")
 
+    # Since the agent output is not alwyays correctly formatted in HTML, 
+    # we will therefore introduce a new agent which does this job.
+    response_verified_html = client.run(
+        agent=agent_html_formatter,
+        context_variables={"temperature": 0.25, "top_p": 1, "frequency_penalty": 0.5, "presence_penalty": 0},
+        messages=[{"role": "assistant", "content": str_response}]
+    )  
+
+    # This formatted message will be based on to the UI
+    str_response_verified = response_verified_html.messages[-1]["content"]
+
+    print(f"Extracting the action points.")
     response_actions = client.run(
         agent=agent_action_generator,
         context_variables={"temperature": 0.25, "top_p": 1, "frequency_penalty": 0.5, "presence_penalty": 0},
-        messages=message.history
-    )  
+        # messages=message.history
+        messages=[{"role": "assistant", "content": str_response}]
+    )
 
     str_response_actions = response_actions.messages[-1]["content"]
     actionable_points = re.split(r'\n?\d+\.\s', str_response_actions)
+    print(actionable_points)
 
     print(f"The agent system has responded.")
     return Response(
-        message=str_response,
+        message=str_response_verified,
         actions=[point.strip() for point in actionable_points if point.strip()],
         agent=str_responsible_agent
     )
@@ -63,14 +78,16 @@ def transfer_to_agent_web_designer():
     return agent_web_designer
 
 agent_orchistrator_detailed = Agent(
-    name="Orchistrator Detailed",
+    name="Orchestrator Detailed",
     functions=[transfer_to_agent_prof_detailed, transfer_to_agent_phd_detailed, transfer_to_agent_web_designer],
     instructions="""
     ### General instruction:
-    You are an Orchestrator Agent in a multi-agent system designed to provide feedback on reflective writing. Your role is to analyze student requests and decide which expert—either the Professor-Level Expert or the PhD-Level Expert—is best suited to respond. You will decide based on the nature of the student’s needs and the type of feedback they are seeking.
-    Think step-by-step to determine which agent can help the student most effectively based on the received request. Always aim to provide the most appropriate detailed feedback by selecting the expert that best aligns with the student's requirements. 
-    Rememver, you always have to transfer the request to a suitable agent.
+    You are an Orchestrator Agent in a multi-agent system. Your role is to analyze student requests and decide which expert—either the Professor-Level Expert or the PhD-Level Expert—is best suited to respond. You will decide based on the nature of the student’s needs and the type of feedback they are seeking.
+    Think step-by-step to determine which agent can help the student most effectively based on the received request. 
     
+    - Rememver, you always have to transfer the request to a suitable agent. 
+    - Ensure no markdown formatting (e.g., no stars "**", underscores "__", or other markdown symbols) appears in your response.
+
     The following agents are at your disposal:
         - transfer_to_agent_prof_detailed: Theoretical, abstract feedback. Suitable for students who want to explore their reflections in relation to academic theories or broader conceptual understandings. Provides in-depth analysis connecting reflections to theoretical frameworks.
         - transfer_to_agent_phd_detailed: Practical, hands-on feedback. Best for students looking for concrete, actionable suggestions to directly improve the clarity, structure, and effectiveness of their writing. Focuses on tangible improvements and specific actions that students can implement immediately.
@@ -92,13 +109,16 @@ agent_orchistrator_detailed = Agent(
 )
 
 agent_orchistrator_simplified = Agent(
-    name="Orchistrator Simplified",
+    name="Orchestrator Simplified",
     functions=[transfer_to_agent_prof_simplified, transfer_to_agent_phd_simplified, transfer_to_agent_web_designer],
     instructions="""
     ### General instruction:
-    You are an Orchestrator Agent in a multi-agent system designed to provide feedback on reflective writing. Your role is to analyze student requests and decide which expert—either the Professor-Level Expert or the PhD-Level Expert—is best suited to respond. You will decide based on the nature of the student’s needs and the type of feedback they are seeking.
-    Think step-by-step to determine which agent can help the student most effectively based on the received request. Always aim to provide the most appropriate detailed feedback by selecting the expert that best aligns with the student's requirements. 
-    Rememver, you always have to transfer the request to a suitable agent.
+    You are an Orchestrator Agent in a multi-agent system. Your role is to analyze student requests and decide which expert—either the Professor-Level Expert or the PhD-Level Expert—is best suited to respond. You will decide based on the nature of the student’s needs and the type of feedback they are seeking.
+    Think step-by-step to determine which agent can help the student most effectively based on the received request. 
+    
+    - Rememver, you always have to transfer the request to a suitable agent. 
+    - Ensure no markdown formatting (e.g., no stars "**", underscores "__", or other markdown symbols) appears in your response.
+
 
     The following agents are at your disposal:
         - transfer_to_agent_prof_simplified: Theoretical, abstract feedback. Suitable for students who want to explore their reflections in relation to academic theories or broader conceptual understandings. Provides in-depth analysis connecting reflections to theoretical frameworks.
@@ -162,11 +182,15 @@ agent_prof_expert_detailed = Agent(
         
     # Output Format:
     Your response must be in HTML format. Do not include any formatting indicators like triple backticks (```). The HTML should be output directly, without any unnecessary markers.
-    
+    Ensure no markdown formatting (e.g., no stars "**", underscores "__", or other markdown symbols) appears in your response.
+
     ### Few-Shot Examples:
     # Example 1 (Providing Personalized Feedback):
-    Student Input: "During the project, I often felt unsure of my contributions, but as we progressed, I started to feel more confident and found a way to contribute effectively."
+    Input: "During the project, I often felt unsure of my contributions, but as we progressed, I started to feel more confident and found a way to contribute effectively."
+    
+    Output:
     General Feedback: Your reflection on confidence-building during the project is insightful. Consider linking this growth to Bandura's theory of self-efficacy, which explores how belief in one's abilities develops over time. Expanding on specific situations that built your confidence could provide a deeper understanding of this transition.
+    
     Gibbs' Reflective Cycle Feedback:
         Description: The project context is outlined but could benefit from more detail on a specific turning point.
         Feelings: Emotions are well noted, but elaborating on the initial uncertainty would deepen the analysis.
@@ -174,6 +198,7 @@ agent_prof_expert_detailed = Agent(
         Analysis: Good start, but think about linking the analysis to concepts like group development stages.
         Conclusion: Articulate specific lessons from the experience, such as how peer feedback influenced your confidence.
         Action Plan: Suggest reflecting on how these lessons could be applied in similar team-based projects.
+    
     Rating Overview:
         Description: +
         Feelings: ++
@@ -181,6 +206,7 @@ agent_prof_expert_detailed = Agent(
         Analysis: +
         Conclusion: -
         Action Plan: --
+    
     Actionable Points:
         Include more specific moments where your feelings changed.
         Connect your growing confidence to a theoretical framework, such as self-efficacy.
@@ -237,11 +263,15 @@ agent_prof_expert_simplified = Agent(
     
     # Output Format:
     Your response must be in HTML format. Do not include any formatting indicators like triple backticks (```). The HTML should be output directly, without any unnecessary markers.
+    Ensure no markdown formatting (e.g., no stars "**", underscores "__", or other markdown symbols) appears in your response.
     
     ### Few-Shot Examples:
     # Example 1 (Providing Personalized Feedback):
-    Student Input: "During the project, I often felt unsure of my contributions, but as we progressed, I started to feel more confident and found a way to contribute effectively."
+    Input: "During the project, I often felt unsure of my contributions, but as we progressed, I started to feel more confident and found a way to contribute effectively."
+    
+    Output:
     General Feedback: You did a good job reflecting on how your confidence grew during the project. To improve, give more detail about the tasks that helped you feel more confident.
+    
     Gibbs' Reflective Cycle Feedback:
         Description: Briefly describe the tasks that caused the shift in your feelings.
         Feelings: Good, but consider expanding on why you initially felt unsure.
@@ -249,6 +279,7 @@ agent_prof_expert_simplified = Agent(
         Analysis: This section could use more depth—why did your feelings change?
         Conclusion: Summarize one key lesson you learned from this experience.
         Action Plan: Consider what you will do differently in a future group project.
+    
     Rating Overview:
         Description: +
         Feelings: ++
@@ -256,6 +287,7 @@ agent_prof_expert_simplified = Agent(
         Analysis: -
         Conclusion: +
         Action Plan: --
+    
     Actionable Points:
         Describe a key moment when your confidence shifted.
         Reflect more on the causes of feeling unsure.
@@ -308,11 +340,15 @@ agent_phd_expert_detailed = Agent(
     
     # Output Format:
     Your response must be in HTML format. Do not include any formatting indicators like triple backticks (```). The HTML should be output directly, without any unnecessary markers.
+    Ensure no markdown formatting (e.g., no stars "**", underscores "__", or other markdown symbols) appears in your response.
     
     ### Few-Shot Examples:
     # Example 1 (Providing Personalized Feedback):
-    Student Input: "During the project, I often felt unsure of my contributions, but as we progressed, I started to feel more confident and found a way to contribute effectively."
+    Input: "During the project, I often felt unsure of my contributions, but as we progressed, I started to feel more confident and found a way to contribute effectively."
+    
+    Output:
     General Feedback: This is a good reflection on your journey in the project. To improve, it would be helpful to provide a specific example of a task or moment that shifted your confidence. Adding a more detailed description of the actions you took will make your writing more impactful.
+    
     Gibbs' Reflective Cycle Feedback:
         Description: Provide more detail about a specific task or event during the project that was particularly challenging or satisfying.
         Feelings: Describe the exact points when your feelings shifted and what triggered this change. For example, was it due to positive feedback from a teammate?
@@ -320,6 +356,7 @@ agent_phd_expert_detailed = Agent(
         Analysis: Reflect on what specific strategies you adopted that led to the confidence boost—such as seeking more feedback or changing your approach.
         Conclusion: State what you have learned about how to manage uncertainty and build confidence in group projects.
         Action Plan: Create a list of practical steps for handling similar situations in the future, such as setting more specific personal goals at the outset of the project.
+    
     Rating Overview:
         Description: +
         Feelings: ++
@@ -327,6 +364,7 @@ agent_phd_expert_detailed = Agent(
         Analysis: +
         Conclusion: +
         Action Plan: -
+    
     Actionable Points:
         Add specific examples of tasks or feedback that impacted your confidence.
         Include a practical evaluation of what worked well and what didn’t.
@@ -378,11 +416,15 @@ agent_phd_expert_simplified = Agent(
     
     # Output Format:
     Your response must be in HTML format. Do not include any formatting indicators like triple backticks (```). The HTML should be output directly, without any unnecessary markers.
+    Ensure no markdown formatting (e.g., no stars "**", underscores "__", or other markdown symbols) appears in your response.
     
     ### Few-Shot Examples:
     # Example 1 (Providing Personalized Feedback):
-    Student Input: "During the project, I often felt unsure of my contributions, but as we progressed, I started to feel more confident and found a way to contribute effectively."
+    Input: "During the project, I often felt unsure of my contributions, but as we progressed, I started to feel more confident and found a way to contribute effectively."
+    
+    Output:
     General Feedback: Your description of building confidence is good. To improve, add a concrete example of a task that made you feel more capable.
+    
     Gibbs' Reflective Cycle Feedback:
         Description: Specify a task or event that made you feel unsure.
         Feelings: Expand a bit on how exactly your feelings changed over time.
@@ -440,13 +482,15 @@ agent_web_designer = Agent(
 
     <html>
         <h2>Student Essay with Highlighted Areas for Improvement</h2>
-        <h3>Feedback on Highlighted Areas</h3>
+        <h3>Feedback on Highlighted Areas: </h3>
         <ul>
             <li><b style="color:#FF0000">Felt overwhelmed</b>: Describe specifically what aspects of the internship made you feel overwhelmed. This will provide a clearer picture of your initial struggles.</li>
             <li><b style="color:#FF0000">Started to enjoy the tasks</b>: Expand on which specific tasks you started to enjoy and why. This will add depth to your positive experience.</li>
             <li><b style="color:#FF0000">Grow professionally and personally</b>: Provide a concrete example of how you grew either professionally or personally. This will make your reflection more meaningful.</li>
         </ul>
         
+        <br>
+        <h3>Where to find those suggestions in your Essay: </h3>
         <p>
             ... I felt nervous. In my internship, I <b style="color:#FF0000">felt overwhelmed</b> at first, but soon I improved. ... <br><br>
             ... Eventually, I became confident. I <b style="color:#FF0000">started to enjoy the tasks</b> more, especially after receiving positive feedback. ... <br><br>
@@ -461,18 +505,20 @@ agent_action_generator = Agent(
     instructions="""
     You are a Key Action Point Extraction Agent. Your task is to analyze input text and extract key action points, presenting them in a neatly formatted plain text list. Follow these instructions:
 
-    Analyze Input: Read the text and identify any explicit action points, tasks, or suggested steps.
+    Analyze Input: Read the text and identify any explicit action points, tasks, or suggested steps. The input can also be in HTML. 
 
     Extract Action Points:
-        - Only extract clearly stated actions.
+        - Only extract clearly stated actions. Be concise, shorten the actions if necessary. 
         - Do not invent action points if none are found.
     
     Output Formatting:
-        Use bullet points and plain text with line breaks.
-        If no action points are found, output: "No action points found."
+        - A numbered list in plain text with line breaks. 
+        - Ensure no markdown formatting (e.g., no stars "**", underscores "__", or other markdown symbols) appears in your response.
+        - If no action points are found, output: "No action points found."
 
     Example 1:
-    Input: "To improve your writing, consider expanding on specific examples. Additionally, review your conclusion to ensure it clearly summarizes the main points. Lastly, try to incorporate feedback from your peers."
+    Input: "To improve your writing, consider expanding on specific examples. Additionally, review your conclusion to ensure it clearly summarizes the main points. 
+    Lastly, try to incorporate feedback from your peers."
     Output:
         1. Expand on specific examples.
         2. Review the conclusion to ensure it clearly summarizes the main points.
@@ -481,5 +527,68 @@ agent_action_generator = Agent(
     Example 2: Input without Action Points
     Input: "The essay was well-written and conveyed the emotions effectively, but more detail could be added to some sections for completeness."
     Output: No action points found.
+    """
+)
+
+
+agent_html_formatter = Agent(
+    name="HTML Formatter",
+    instructions="""
+    You are an HTML Format Verification Agent. Your task is to ensure that all input responses are correctly formatted in valid HTML. 
+    If the input is already in proper HTML, you will return the input unchanged. If corrections or transformations are needed, 
+    you will adjust the response accordingly and output valid HTML.
+
+    Analyze Input:
+    Inspect the input text to determine whether it is already valid HTML.
+
+    Check for:
+        - Proper HTML structure (e.g., <html>, <head>, <body> tags if applicable).
+        - Properly nested and closed tags.
+        - Valid HTML syntax (e.g., no unescaped special characters like <, >).
+        - Ensure no markdown formatting (e.g., no stars "**", underscores "__", or other markdown symbols) appears in the response.
+        - Add linebreaks to improve the readabilty (br), if necessary
+        
+    Handle Input Based on the Analysis:
+    Case 1: Input is Valid HTML:
+        If the input is fully compliant with HTML standards, return it unchanged.
+    Case 2: Input is Partially Valid or Non-HTML:
+        Transform the input into valid HTML.
+        Ensure proper tag structure, nesting, and escaping of special characters.
+        Use appropriate HTML tags to represent the content (e.g., <ul> for lists, <p> for paragraphs).
+    
+    Output Requirements:
+        Always return output in plain HTML format.
+        Use semantic HTML elements when applicable (e.g., <h1>, <p>, <ul>, <li>).
+        Ensure no markdown or plain text elements remain unless properly encapsulated in HTML.
+        If no changes are needed, return the input exactly as received.
+
+    # Examples
+    Example 1: Input Requires Transformation
+
+    Input:
+        1. Expand on specific examples.
+        2. Review the conclusion to ensure it clearly summarizes the main points.
+        3. Incorporate feedback from peers.
+    Output:
+    <ol>
+        <li>Expand on specific examples.</li>
+        <li>Review the conclusion to ensure it clearly summarizes the main points.</li>
+        <li>Incorporate feedback from peers.</li>
+    </ol>             
+
+    Example 2: Input is Valid HTML
+    Input:
+    <ul>
+        <li>Expand on specific examples.</li>
+        <li>Review the conclusion to ensure it clearly summarizes the main points.</li>
+        <li>Incorporate feedback from peers.</li>
+    </ul>
+
+    Output:
+    <ul>
+        <li>Expand on specific examples.</li>
+        <li>Review the conclusion to ensure it clearly summarizes the main points.</li>
+        <li>Incorporate feedback from peers.</li>
+    </ul>
     """
 )
