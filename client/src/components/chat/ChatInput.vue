@@ -70,11 +70,11 @@ const sendMessage = async () => {
     <div class="flex items-center gap-4">
       <button
         @click="chatStore.detailedAnswer = !chatStore.detailedAnswer"
-        class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+        class="p-2 -mt-0.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
         :title="chatStore.detailedAnswer ? 'Change to Short Answer' : 'Change to Detailed Answer'"
       >
         <svg
-          class="w-6 h-6"
+          class="w-6 h-6 -mt-1"
           :class="{ 'text-blue-500': chatStore.detailedAnswer }"
           fill="none"
           stroke="currentColor"
@@ -96,11 +96,11 @@ const sendMessage = async () => {
             @keyup.enter="handleKeyUp"
             placeholder="Type your message..."
             rows="1"
-            class="w-full px-2 pr-8 py-1 rounded-md border dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none overflow-y-auto max-h-48"
+            class="w-full box-border px-2 pr-8 py-1 rounded-md border dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none overflow-y-auto max-h-48"
         ></textarea>
         <button
           @click="() => { sendMessage(); resetTextareaHeight(); }"
-          class="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+          class="absolute m-[-3px] right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           <svg
             class="w-5 h-5 text-blue-500"
